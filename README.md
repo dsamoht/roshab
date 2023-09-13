@@ -9,7 +9,7 @@
 ```
 docker pull dsamoht/roshab-dev
 ```
-### Launch the pipeline on raw reads
+### Launch the pipeline
 ```
 nextflow run roshab-wf.nf --raw_reads /path/to/raw-reads.fastq.fz
 ```
