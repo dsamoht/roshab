@@ -29,7 +29,6 @@ Arguments:
 
 Optional arguments:
      --live : to run the "live" workflow
-"""
 ```
 ### Dependencies
 
