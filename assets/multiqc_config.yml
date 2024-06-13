@@ -1,0 +1,5 @@
+kraken:
+  top_n: 10
+
+bracken:
+  top_n: 10

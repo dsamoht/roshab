@@ -1,108 +1,73 @@
 #!/usr/bin/env nextflow
 
-process kraken2 {
+include { ROSHAB_WF      } from './workflows/roshab_wf'
+include { ROSHAB_LIVE_WF } from './workflows/roshab_live_wf'
 
-    publishDir 'results/kraken2/', mode: 'copy', pattern: 'kraken2.tax.report'
 
-    input:
-    path rawReads
+info = """
+  ____           _   _    _    ____      _____           _ 
+ |  _ \\ ___  ___| | | |  / \\  | __ )    |_   _|__   ___ | |
+ | |_) / _ \\/ __| |_| | / _ \\ |  _ \\ _____| |/ _ \\ / _ \\| |
+ |  _ < (_) \\__ \\  _  |/ ___ \\| |_) |_____| | (_) | (_) | |
+ |_| \\_\\___/|___/_| |_/_/   \\_\\____/      |_|\\___/ \\___/|_|
+                                                           
 
-    output:
-    path 'kraken2.tax.report', emit: kraken2OutputDir
+ Taxonomic classification of ONT reads with Kraken2.
+ 2 modes:
+        - normal : run the pipeline on already existing files
+        - live : run the pipeline during sequencing on newly generated files
+     
+     Github: https://github.com/dsamoht/roshab-wf
+     Version: still no release
 
-    script:
-    """
-    kraken2 --db /app --report kraken2.tax.report ${rawReads}
-    """
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Usage:
+
+     nextflow run roshab-wf.nf -profile local,docker --exp [NAME] --reads [PATH] --output [PATH]
+
+Arguments:
+     --exp [NAME] : name of the experiment
+     --output [PATH] : path to output directory (will be created if non-existant)
+     --reads [PATH] : path to the reads file
+
+Optional arguments:
+     --live : to run the "live" workflow
+"""
+
+log.info info
+
+if( params.help ) {
+
+log.info info
+    exit 0
 }
 
-process bracken {
-
-    publishDir 'results/kraken2/', mode: 'copy', pattern: 'kraken2.report.bracken'
-
-    input:
-    path kraken2OutputDir
-
-    output:
-    path 'kraken2.report.bracken', emit: brackenOutputDir
-
-    script:
-    """
-    python3 /app/Bracken/src/est_abundance.py -i ${kraken2OutputDir} -k /app/database300mers.kmer_distrib -l S -o kraken2.report.bracken
-    """
+if ( !params.exp) {
+    log.info "Error: experiment name not specified."
+    exit 1
 }
 
-process plotly {
-
-    publishDir 'results/plots/', mode: 'copy', pattern: 'kraken2.bracken.viz.html'
-
-    input:
-    path kraken2OutputDir
-    path brackenOutputDir
-
-    output:
-    path 'kraken2.bracken.viz.html', emit: htmlOutput
-
-    script:
-    """
-    python3 /app/scripts/taxonomy.py ${kraken2OutputDir} ${brackenOutputDir} kraken2.bracken.viz.html
-    """
+if ( !params.reads) {
+    log.info "Error: reads directory not specified."
+    exit 1
 }
 
-process flye {
-
-    publishDir 'results/flye/'
-
-    input:
-    path rawReads
-
-    output:
-    path 'flye_out', emit: flyeOutputDir
-
-    script:
-    """
-    flye --nano-raw ${rawReads} -o 'flye_out' --meta --threads 4
-    """
+if ( !params.output) {
+    log.info "Error: output directory not specified."
+    exit 1
 }
 
-process prodigal {
-
-    publishDir 'results/prodigal/', mode: 'copy', pattern: 'coords.gbk'
-    publishDir 'results/prodigal/', mode: 'copy', pattern: 'genes.faa'
-
-    input:
-    path flyeOutputDir
-
-    output:
-    path 'coords.gbk', emit: coordsOut
-    path 'genes.faa', emit: genesOut
-
-    script:
-    """
-    prodigal -i ${flyeOutputDir}/assembly.fasta -o coords.gbk -a genes.faa -p meta
-    """
-}
-
-process cdhit2d {
-
-    publishDir 'results/cd-hit-2d/'
-
-    input:
-    path genesOut
-
-    output:
-    path 'mibig.clstr', emit: coordsOut
-
-    script:
-    """
-    cd-hit-2d -i /app/data/mibig_prot_seqs_3.1.fasta -i2 ${genesOut} -o mibig_db -c 0.9 -n 5 -d 0 -M 0 -T 0
-    """
-}
 
 workflow {
 
-    kraken2(params.raw_reads)
-    bracken(kraken2.out.kraken2OutputDir)
-    plotly(kraken2.out.kraken2OutputDir, bracken.out.brackenOutputDir)
+    if (params.live) {
+
+        ROSHAB_LIVE_WF()
+
+    } else {
+
+        ROSHAB_WF()
+
+    }
 
 }
