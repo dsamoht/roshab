@@ -31,11 +31,11 @@ workflow ROSHAB_WF {
    ch_krona_out = KRONA(ch_krakentools_krona.krakentools_to_krona)
 
    ch_multiqc_files = Channel.empty()
-   ch_multiqc_files = ch_multiqc_files.mix(ch_nanostats_out,
-                        ch_qc_reads,
+   ch_multiqc_files = ch_multiqc_files.mix(ch_nanostats_out.ifEmpty([]),
+                        ch_qc_reads.ifEmpty([]),
                         ch_fastqc_out,
                         ch_kraken_out,
-                        ch_bracken_out
+                        ch_bracken_out.ifEmpty([])
                         ).map { it[1] }.collect()   
    
    MULTIQC(ch_multiqc_files)

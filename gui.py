@@ -1,11 +1,3 @@
-import subprocess
-
-try:
-    import PySide6
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "PySide6"])
-
-
 from datetime import datetime
 from pathlib import Path
 import sys
