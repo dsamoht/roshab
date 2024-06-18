@@ -17,7 +17,6 @@ process FASTQC {
 
     script:
     """
-    mv ${reads} ${read_id}.fastq.gz
-    fastqc ${read_id}.fastq.gz
+    fastqc ${reads}
     """
 }

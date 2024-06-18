@@ -38,8 +38,6 @@ Optional arguments:
 log.info info
 
 if( params.help ) {
-
-log.info info
     exit 0
 }
 
