@@ -15,7 +15,7 @@ info = """
  Taxonomic classification of ONT reads with Kraken2.
  2 modes:
         - normal : run the pipeline on already existing files
-        - live : run the pipeline during sequencing on newly generated files
+        - live (not supported yet): run the pipeline during sequencing on newly generated files
      
      Github: https://github.com/dsamoht/roshab-wf
      Version: still no release
@@ -28,7 +28,8 @@ Usage:
 Arguments:
      --exp [NAME] : name of the experiment
      --output [PATH] : path to output directory (will be created if non-existant)
-     --reads [PATH] : path to the reads file
+     --reads [PATH] : path to a single file or to a directory of files
+                      (if directory, the subfolder `fastq_pass` will be used)
 
 Optional arguments:
      --live : to run the "live" workflow

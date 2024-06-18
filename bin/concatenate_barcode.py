@@ -3,7 +3,13 @@ import re
 import sys
 
 
-_files = glob(f"{sys.argv[1]}/**/fastq_pass/**/*.fastq.gz", recursive=True)
+if ( sys.argv[1].endswith(".fastq.gz") or sys.argv[1].endswith(".fastq") ):
+    _files = [sys.argv[1]]
+
+else:
+    _files = glob(f"{sys.argv[1]}/**/fastq_pass/**/*.fastq.gz", recursive=True)
+    
+
 _file_dict = {}
 BARCODE_PATTERN = re.compile(r'barcode\d{2}')
 EXPNAME = sys.argv[2]
