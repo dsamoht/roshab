@@ -1,5 +1,70 @@
+report_header_info:
+  - Application: "RosHAB Project"
+  - Application Type: "Environmental Genomics"
+  - Technology: "Oxford Nanopore Technologies (ONT) long reads"
+  - Sequencing Platform: "ONT MinION Mk1B"
+
+
+custom_logo: "./logo_inst.png"
+
+title: "RosHAB : Rapid on-site detection of harmful algal blooms"
+subtitle: ""
+intro_text: "MultiQC report that summarises taxonomic classification of ONT reads and analysis of cyanotoxin-related genes"
+
+show_analysis_paths: False
+show_analysis_time: False
+
 kraken:
   top_n: 10
 
 bracken:
   top_n: 10
+
+skip_generalstats: true
+
+remove_sections:
+  - fastqc_per_base_sequence_content
+  - fastqc_status_checks
+  - fastqc_adapter_content
+  - fastqc_top_overrepresented_sequences
+  - fastqc_sequence_duplication_levels
+  - fastqc_per_base_n_content
+  - fastqc_overrepresented_sequences
+
+custom_plot_config:
+  fastqc_sequence_counts_plot:
+    cpswitch_c_active: False
+  nanostat_quality_dist:
+    cpswitch_c_active: False
+  bracken-top-n-plot:
+    cpswitch_c_active: False
+  kraken-top-n-plot:
+    cpswitch_c_active: False
+  
+disable_version_detection: true
+
+software_versions:
+  bracken: "2.9"
+  chopper: "0.7.0"
+  fastqc: "0.12.1"
+  kraken: "2.1.3"
+  krakentools: "1.2"
+  krona: "2.8.1"
+  minimap: "2.26"
+  multiqc: "1.22.2"
+  nanostat: "1.5.0"
+  samtools: "1.18"
+
+top_modules:
+  - nanostat
+  - fastqc
+  - kraken
+  - bracken
+  - samtools:
+      name: "Samtools (taxonomy)"
+      path_filters:
+        - "**/*taxa_*idxstat"
+  - samtools:
+      name: "Samtools (toxin-related genes)"
+      path_filters:
+        - "**/*gene_*idxstat"

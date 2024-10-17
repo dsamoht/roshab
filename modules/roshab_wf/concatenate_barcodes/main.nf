@@ -6,11 +6,14 @@ process CONCATENATE_BARCODES {
         container = params.python_docker
     }
 
+    input:
+    path input_dir
+
     output:
     path "*.fastq.gz", emit: barcodes
 
     script:
     """
-    python $projectDir/bin/concatenate_barcode.py ${params.reads} ${params.exp}
+    concatenate_barcode.py ${input_dir} ${params.exp}
     """
 }

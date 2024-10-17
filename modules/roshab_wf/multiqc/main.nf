@@ -16,7 +16,9 @@ process MULTIQC {
     path "*_data", emit: data
 
     """
-    multiqc -c ${projectDir}/assets/multiqc_config.yml -e general_stats . 
+    cp ${projectDir}/assets/* .
+    multiqc -c ./multiqc_config.yml .
+    mv *.html multiqc_${params.exp}.html
+    mv *_data multiqc_${params.exp}_data
     """
-
 }

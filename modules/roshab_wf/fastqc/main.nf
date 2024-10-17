@@ -17,6 +17,6 @@ process FASTQC {
 
     script:
     """
-    fastqc ${reads}
+    fastqc --memory 6000 ${reads}
     """
 }

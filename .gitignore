@@ -4,3 +4,4 @@
 test/*
 .DS_store
 test_data
+*__pycache__*
