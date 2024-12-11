@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RosHAB Tool</title>
+    <link rel= "stylesheet" type= "text/css" href="{{ url_for('static', filename='style/bootstrap-5.3.3-dist/css/bootstrap.css') }}">
+    <script src="{{ url_for('static',filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/jquery-3.6.0.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/socket.io.js') }}"></script>
+</head>
+<body>
+  <div class="container mt-4 mb-4">
+  <div class="toast-container z-3">
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        {% for category, message in messages %}
+        <div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+          <div class="toast-header
+            {% if category == 'error' %}bg-danger text-white
+            {% elif category == 'success' %}bg-success text-white
+            {% else %}bg-info text-white{% endif %}">
+            <strong class="me-auto">
+              {% if category == 'error' %}Erreur
+              {% elif category == 'success' %}Succès
+              {% else %}Info{% endif %}
+            </strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+          </div>
+          <div class="toast-body">
+            {% for line in message %}
+            {{line}}<br>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+    <div>
+    <div class="card">
+      <h5 class="card-header"><b>RosHAB</b> : DÉTECTION RAPIDE DES PROLIFÉRATIONS D'ALGUES NUISIBLES SUR LE TERRAIN</h5>
+      <div class="card-body">
+        <img src="{{ url_for('static',filename='img/logo_inst.png') }}" class="center-block" style="width: 207px; height: 60px;">
+      </div>
+    </div>
+   </div>
+    {% if not exp_config['docker_status'] %}
+          <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
+            <strong><u>DOCKER EST INACTIF</u>.</strong> Vous devez activer DOCKER et redémarrer l'application.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+    {% endif %}
+    <div class="row">
+    <div class="col-md-6">
+    <div class="card mt-4">
+      <h5 class="card-header">1. CONFIGURATION</h5>
+      <div class="card-body">
+        <form method="POST" action="/get_run_info_base" id="exp-base-config">
+          <div class="mb-2">
+            {% if exp_config['exp_id'] %}
+            <label for="exp-id">IDENTIFIANT</label>
+            <input type="text" class="form-control" name="exp-id" value="{{ exp_config['exp_id'] }}" style="color:green" required disabled>
+            {% else %}
+            <label for="exp-id">IDENTIFIANT</label>
+            <input type="text" class="form-control" name="exp-id" placeholder="ex: ROSHAB_EXP_YYYYMMDD" required>
+            {% endif %}
+          </div>
+          <div class="mb-2">
+            {% if exp_config['output_dir'] %}
+            <label for="exp-id">DOSSIER DES RÉSULTATS</label>
+            <input type="text" class="form-control" name="output-name" value="{{ exp_config['output_dir'] }}" style="color:green" required disabled>
+            {% else %}
+            <label for="exp-id">DOSSIER DES RÉSULTATS</label>
+            <input type="text" class="form-control" name="output-name" placeholder="ex: ROSHAB_EXP_YYYYMMDD_out" required>
+            {% endif %}
+          </div>
+          {% if exp_config['exp_id'] and exp_config['output_dir'] %}
+          <button type="submit" class="btn btn-primary mb-2" id="save-config-btn" disabled>Sauvegarder</button>
+          <button type="submit" formaction="/refresh_config" class="btn btn-primary mb-2" id="refresh-config-btn">Modifier</button>
+          {% else %}
+          <button type="submit" class="btn btn-primary mb-2" id="save-config-btn">Sauvegarder</button>
+          <button type="submit" formaction="/refresh_config" class="btn btn-primary mb-2" id="refresh-config-btn" disabled>Modifier</button>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+    </div>
+
+    <div class="col-md-6">
+    <div class="card mt-4">
+      <h5 class="card-header">2. SÉLECTION DES FICHIERS</h5>
+      <div class="card-body">
+        <form action="/upload_directory" method="POST" enctype="multipart/form-data" class="mb-2">
+          <div class="input-group">
+            <input id="file-selector-btn" type="file" class="form-control" name="files[]" webkitdirectory directory multiple>
+            <button id="file-uploader-btn" type="submit" class="btn btn-primary">CHARGEMENT DES FICHIERS</button>
+          </div>
+        </form>
+        <div id="uploaded-files">
+          {% if exp_config['uploaded_files']|length > 1 %}
+          <h5><span class="badge bg-success text-white">{{ exp_config['uploaded_files']|length }}</span> FICHIERS TROUVÉS</h5>
+          {% elif exp_config['uploaded_files']|length == 0 %}
+          <h5><span class="badge bg-warning text-white">{{ exp_config['uploaded_files']|length }}</span> FICHIER TROUVÉ</h5>
+          {% else %}
+          <h5><span class="badge bg-success text-white">{{ exp_config['uploaded_files']|length }}</span> FICHIER TROUVÉ</h5>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+    <div class="card mt-4">
+      <h5 class="card-header">3. ANALYSE</h5>
+      <div class="card-body">
+          <div class="mb-2">
+            {% if exp_config['exp_id'] and exp_config['output_dir'] and exp_config['docker_status'] and exp_config['uploaded_files'] %}
+            <button type="button" class="btn btn-success text-white" id="run-workflow-btn">Commencer</button>
+            {% else %}
+            <button type="button" class="btn btn-success text-white" id="run-workflow-btn" disabled>Commencer</button>
+            {% endif %}
+            <button type="button" id="cancel-workflow-btn" class="btn btn-danger text-white" data-bs-html="true" data-toggle="tooltip" data-placement="top" title="<u>ATTENTION</u>: l'application devra être fermée avant d'être relancée." disabled>Annuler</button>
+          </div>
+          <h5 class="h5">Progression :<span id="workflow-progress-str" class="ms-2 text-body" style="font-size: 14px;"></span></h5>
+          <div class="progress" role="progressbar">
+            <div class="progress-bar progress-bar-striped progress-bar-animated"></div>
+          </div>
+      </div>
+    </div>
+
+    <form method="POST" action="/open_results" id="open-results">
+    <div class="card mt-4">
+      <h5 class="card-header">4. RÉSULTATS <img src="{{ url_for('static', filename='img/file-earmark-bar-graph.svg') }}" alt="Icon" class="bi bi-bootstrap-fill" style="transform: scale(1.1);"></h5>
+      <div class="card-body">
+        <button type="submit" class="btn btn-primary mb-2" id="open-results-btn" disabled>Ouvrir</button>
+      </div>
+    </div>
+    </form>
+  
+  </div>
+
+  <script>
+  
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+
+    var socket = io();
+    $('#run-workflow-btn').click(function() {
+            socket.emit('run_workflow', {});
+            $('#run-workflow-btn').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analyse en cours...')
+            .prop('disabled', true);
+            $('#file-selector-btn').prop('disabled', true);
+            $('#file-uploader-btn').prop('disabled', true);
+            $('#refresh-config-btn').prop('disabled', true);
+            $('#cancel-workflow-btn').prop('disabled', false);
+        });
+
+    $('#cancel-workflow-btn').click(function() {
+            socket.emit('cancel_workflow', {});
+            $('.progress-bar').addClass("bg-warning");
+            $('#run-workflow-btn').html('Commencer')
+            .prop('disabled', true);
+            $('#file-selector-btn').prop('disabled', true);
+            $('#file-uploader-btn').prop('disabled', true);
+            $('#refresh-config-btn').prop('disabled', true);
+            $('#cancel-workflow-btn').prop('disabled', true);
+        });
+    
+    socket.on('progress', function(data) {
+            var progress = data.progress;
+            $('.progress-bar').css('width', progress + '%');
+        });
+
+    socket.on('logging', function(data) {
+            var log = data.log;
+            $('#workflow-progress-str').html(log);
+        });
+
+    socket.on('finish', function(data) {
+            $('.progress-bar').addClass("bg-success");
+            $('#run-workflow-btn').html('Commencer')
+            .prop('disabled', true);
+            $('#file-selector-btn').prop('disabled', true);
+            $('#file-uploader-btn').prop('disabled', true);
+            $('#refresh-config-btn').prop('disabled', true);
+            $('#cancel-workflow-btn').prop('disabled', true);
+            $('#open-results-btn').prop('disabled', false);
+        });
+
+    $('#open-results-btn').click(function() {
+            $('#open-results-btn').prop('disabled', true);
+    });
+        
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var toasts = document.querySelectorAll('.toast')
+      toasts.forEach(function(toast) {
+        var bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+      });
+    });
+  
+  </script>
+</body>
+</html>

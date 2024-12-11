@@ -1,22 +1,18 @@
 process KRONA {
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.krona_singularity
-    } else {
-        container = params.krona_docker
-    }
+    container workflow.containerEngine == 'singularity' ?
+        params.krona_singularity : params.krona_docker
 
-    publishDir "${params.output}/kraken", mode: 'copy'
-    errorStrategy 'ignore'
+    publishDir "${params.output}/krona", mode: 'copy'
 
     input:
-    path krakentoolsOutput
+    tuple val(reads_id), path(krakentools_krona)
 
     output:
-    path 'krona.html', emit: kronaPlotHtml, optional: true
+    tuple val(reads_id), path('*krona.html'), emit: html
 
     script:
     """
-    ktImportText ${krakentoolsOutput} -o krona.html
+    ktImportText ${krakentools_krona} -o ${reads_id}.krona.html
     """
 }

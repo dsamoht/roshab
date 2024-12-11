@@ -30,6 +30,8 @@ remove_sections:
   - fastqc_sequence_duplication_levels
   - fastqc_per_base_n_content
   - fastqc_overrepresented_sequences
+  - samtools-coverage-table-section
+  - samtools-coverage-table-section-1
 
 custom_plot_config:
   fastqc_sequence_counts_plot:
@@ -59,12 +61,11 @@ top_modules:
   - nanostat
   - fastqc
   - kraken
-  - bracken
   - samtools:
-      name: "Samtools (taxonomy)"
+      name: "Read mapping - Taxonomy"
       path_filters:
-        - "**/*taxa_*idxstat"
+        - "**/*taxa_*coverage"
   - samtools:
-      name: "Samtools (toxin-related genes)"
+      name: "Read mapping - Toxin-related genes"
       path_filters:
-        - "**/*gene_*idxstat"
+        - "**/*gene_*coverage"
