@@ -60,9 +60,11 @@ if ( !params.output) {
 workflow {
 
     if (params.setup) {
-        SETUP_DOCKER_WF()
         if (workflow.containerEngine == "singularity") {
         SETUP_SINGULARITY_WF()
+        }
+        if (workflow.containerEngine == "docker") {
+        SETUP_DOCKER_WF()
         }
     }
     else {
