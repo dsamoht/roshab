@@ -3,6 +3,6 @@
 .nextflow
 test/*
 .DS_store
-test_data
 *__pycache__*
 *roshab_env*
+*uploads*
