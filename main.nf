@@ -6,22 +6,22 @@ include { SETUP_SINGULARITY_WF  } from './workflows/setup_singularity_wf'
 
 
 info = """
-  ____           _   _    _    ____      _____           _ 
- |  _ \\ ___  ___| | | |  / \\  | __ )    |_   _|__   ___ | |
- | |_) / _ \\/ __| |_| | / _ \\ |  _ \\ _____| |/ _ \\ / _ \\| |
- |  _ < (_) \\__ \\  _  |/ ___ \\| |_) |_____| | (_) | (_) | |
- |_| \\_\\___/|___/_| |_/_/   \\_\\____/      |_|\\___/ \\___/|_|
-                                                           
+  ____           _   _    _    ____         ____ _     ___ 
+ |  _ \\ ___  ___| | | |  / \\  | __ )       / ___| |   |_ _|
+ | |_) / _ \\/ __| |_| | / _ \\ |  _ \\ _____| |   | |    | | 
+ |  _ < (_) \\__ \\  _  |/ ___ \\| |_) |_____| |___| |___ | | 
+ |_| \\_\\___/|___/_| |_/_/   \\_\\____/       \\____|_____|___|
+                                                                                                                      
 
- Taxonomic classification of ONT reads with Kraken2.
+ Taxonomic classification of ONT reads with Kraken2 and minimap2 with a focus on
+ bloom-forming microorganisms.
 
      Github: https://github.com/dsamoht/roshab-wf
-     Version: still no release
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Usage:
 
-     nextflow run roshab-wf.nf --exp [NAME] --reads [PATH] --output [PATH]
+     nextflow run main.nf --exp [NAME] --reads [PATH] --output [PATH]
 
 Arguments:
      --exp [NAME] : name of the experiment

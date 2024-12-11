@@ -17,7 +17,7 @@ include { SAMTOOLS as SAMTOOLS_GENE } from '../../modules/samtools'
 
 workflow ROSHAB_WF {
 
-   CONCATENATE_BARCODES(params.reads)
+   CONCATENATE_BARCODES(Channel.fromPath(params.reads))
   
    concatenated_barcodes = CONCATENATE_BARCODES.out.flatten()
     .map { file ->
