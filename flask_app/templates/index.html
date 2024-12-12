@@ -4,11 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RosHAB Tool</title>
-    <link rel= "stylesheet" type= "text/css" href="{{ url_for('static', filename='style/bootstrap-5.3.3-dist/css/bootstrap.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/bootstrap-5.3.3-dist/css/bootstrap.css') }}">
     <script src="{{ url_for('static',filename='js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static',filename='js/jquery-3.6.0.js') }}"></script>
     <script src="{{ url_for('static',filename='js/socket.io.js') }}"></script>
 </head>
+<style>
+  .card:hover {
+      border-left: 3px solid green;
+      margin-left: -2px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+</style>
 <body>
   <div class="container mt-4 mb-4">
   <div class="toast-container z-3">
@@ -41,8 +48,13 @@
     <div>
     <div class="card">
       <h5 class="card-header"><b>RosHAB</b> : DÉTECTION RAPIDE DES PROLIFÉRATIONS D'ALGUES NUISIBLES SUR LE TERRAIN</h5>
-      <div class="card-body">
-        <img src="{{ url_for('static',filename='img/logo_inst.png') }}" class="center-block" style="width: 207px; height: 60px;">
+      <div class="d-flex flex-row">
+        <div class="border-end border-3 border-dark">
+          <img src="{{ url_for('static',filename='img/logo_inst.png') }}" class="center-block" style="width: 207px; height: 60px;">
+        </div>
+        <div class="border-end border-3">
+         <img src="{{ url_for('static',filename='img/bloom_orig.png') }}" class="center-block" style="width: 207px; height: 70px;">
+        </div>
       </div>
     </div>
    </div>
