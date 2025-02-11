@@ -10,7 +10,7 @@ include { MINIMAP as MINIMAP_TAXA   } from '../../modules/minimap'
 include { MINIMAP as MINIMAP_GENE   } from '../../modules/minimap'
 include { MULTIQC                   } from '../../modules/multiqc'
 include { NANOSTAT                  } from '../../modules/nanostat'
-include { PORECHOP_ABI              } from '../../modules/porechop_abi'
+include { PORECHOP                  } from '../../modules/porechop'
 include { SAMTOOLS as SAMTOOLS_TAXA } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_GENE } from '../../modules/samtools'
 
@@ -27,8 +27,8 @@ workflow ROSHAB_WF {
     }
     .filter { it != null }
    
-   ch_porechop_abi_out = PORECHOP_ABI(concatenated_barcodes)
-   ch_qc_reads = CHOPPER(ch_porechop_abi_out)
+   ch_porechop_out = PORECHOP(concatenated_barcodes)
+   ch_qc_reads = CHOPPER(ch_porechop_out.porechopped_reads)
    ch_nanostats_out = NANOSTAT(ch_qc_reads)
    ch_fastqc_out = FASTQC(ch_qc_reads)
    ch_kraken_out = KRAKEN(ch_qc_reads, params.kraken_db)
