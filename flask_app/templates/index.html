@@ -10,9 +10,8 @@
     <script src="{{ url_for('static',filename='js/socket.io.js') }}"></script>
 </head>
 <style>
-  .card:hover {
-      border-left: 3px solid green;
-      margin-left: -2px;
+  .card {
+      border-left: 5px solid green;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
 </style>
@@ -64,15 +63,15 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
     {% endif %}
-    <div class="row">
-    <div class="col-md-6">
-    <div class="card mt-4">
+    <div class="row d-flex">
+    <div class="col-md-6 d-flex">
+    <div class="card mt-4 w-100">
       <h5 class="card-header">1. CONFIGURATION</h5>
       <div class="card-body">
         <form method="POST" action="/get_run_info_base" id="exp-base-config">
           <div class="mb-2">
             {% if exp_config['exp_id'] %}
-            <label for="exp-id">IDENTIFIANT</label>
+            <label for="exp-id">IDENTIFAINT</label>
             <input type="text" class="form-control" name="exp-id" value="{{ exp_config['exp_id'] }}" style="color:green" required disabled>
             {% else %}
             <label for="exp-id">IDENTIFIANT</label>
@@ -100,8 +99,8 @@
     </div>
     </div>
 
-    <div class="col-md-6">
-    <div class="card mt-4">
+    <div class="col-md-6 d-flex">
+    <div class="card mt-4 w-100">
       <h5 class="card-header">2. SÉLECTION DES FICHIERS</h5>
       <div class="card-body">
         <form action="/upload_directory" method="POST" enctype="multipart/form-data" class="mb-2">

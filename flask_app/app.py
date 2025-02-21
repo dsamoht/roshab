@@ -231,6 +231,7 @@ def run_workflow(*args, **kwargs):
                             for software in progression_map:
                                 if software in line:
                                     current_processes[software] = True
+                                    progression_map[software] = False
 
                 progress = round(sum(progression_map.values())/len(progression_map)*100)
                 finished_processes = [soft for soft, status in progression_map.items() if status]

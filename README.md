@@ -19,19 +19,8 @@
      Github: https://github.com/dsamoht/roshab-wf
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Usage:
-
-     nextflow run main.nf --exp [NAME] --reads [PATH] --output [PATH]
-
-Arguments:
-     --exp [NAME] : name of the experiment
-     --output [PATH] : path to output directory (will be created if non-existant)
-     --reads [PATH] : path to a single file or to a directory of files
-                      (if directory, the subfolder `fastq_pass` will be used)
-
-Optional argument:
-    -profile singularity : use Singularity as the container engine instead of the default (Docker)
 ```
+# Installation
 ### Dependencies
 
 - [Nextflow](https://www.nextflow.io/)  
@@ -40,5 +29,19 @@ Optional argument:
 
 - __Edit__ *nextflow.config* :  
   ```  
-  kraken_db = '/path/to/extracted/kraken2/database/directory'
+  kraken_db = '/absolute/path/to/extracted/kraken2/database'
   ```
+### Run the pipeline
+> *__Note__* : the first execution will download container images for future use
+```
+nextflow run main.nf -profile setup
+```
+
+### To run on your data
+```
+nextflow run main.nf --help
+```
+
+### GUI (Currently in development)  
+
+![alt text](assets/roshab-gui.png)
