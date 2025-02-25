@@ -15,6 +15,7 @@ include { SAMTOOLS as SAMTOOLS_TAXA } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_GENE } from '../../modules/samtools'
 
 
+
 workflow ROSHAB_WF {
 
    CONCATENATE_BARCODES(Channel.fromPath(params.reads))

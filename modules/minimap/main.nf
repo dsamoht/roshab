@@ -15,6 +15,6 @@ process MINIMAP {
 
     script:
     """
-    minimap2 -ax map-ont ${nucleotideFasta} ${reads} > ${fastaName}_${reads_id}.map.sam
+    minimap2 -ax map-ont --secondary=no -t ${task.cpus} ${nucleotideFasta} ${reads} > ${fastaName}_${reads_id}.map.sam
     """
 }
