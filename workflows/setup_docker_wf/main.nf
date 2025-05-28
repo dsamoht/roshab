@@ -83,8 +83,8 @@ workflow SETUP_DOCKER_WF {
           exit 0
           """
     }
-    process PORECHOP {
-          container = params.porechop_docker
+    process PORECHOP_ABI {
+          container = params.porechop_abi_docker
           script:
           """
           exit 0
@@ -103,6 +103,6 @@ workflow SETUP_DOCKER_WF {
     NANOSTAT()
     SAMTOOLS()
     QUALIMAP()
-    PORECHOP()
+    PORECHOP_ABI()
 
 }

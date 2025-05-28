@@ -1,0 +1,4 @@
+sample_name,date,site,group,reads
+sample_1,2023-06-01,site_A,lac_1,/Users/thomas/Documents/bioinformatics/data/roshab_data/ROSHAB_ENV_FC14_NAIRNE_20241004_MP_fastq_pass/fastq_pass/barcode11
+sample_2,2023-06-01,site_B,lac_1,/Users/thomas/Documents/bioinformatics/data/roshab_data/ROSHAB_ENV_FC14_NAIRNE_20241004_MP_fastq_pass/fastq_pass/barcode12
+sample_3,2023-06-01,site_C,lac_1,/Users/thomas/Documents/bioinformatics/data/roshab_data/ROSHAB_ENV_FC14_NAIRNE_20241004_MP_fastq_pass/fastq_pass/barcode13

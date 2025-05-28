@@ -6,13 +6,14 @@ process KRONA {
     publishDir "${params.output}/krona", mode: 'copy'
 
     input:
-    tuple val(reads_id), path(krakentools_krona)
+    tuple val(meta), path(krakentools_krona)
 
     output:
-    tuple val(reads_id), path('*krona.html'), emit: html
+    tuple val(meta), path('*krona.html'), emit: html
 
     script:
+    def sample_name = meta[0]
     """
-    ktImportText ${krakentools_krona} -o ${reads_id}.krona.html
+    ktImportText ${krakentools_krona} -o ${sample_name}.krona.html
     """
 }

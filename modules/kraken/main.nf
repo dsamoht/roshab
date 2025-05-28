@@ -6,16 +6,17 @@ process KRAKEN {
     publishDir "${params.output}/kraken", mode: 'copy'
 
     input:
-    tuple val(reads_id), path(reads)
+    tuple val(meta), path(reads)
     path db
 
     output:
-    tuple val(reads_id), path('*.kraken'), emit: kraken_report
-    tuple val(reads_id), path('*.kraken.out'), emit: kraken_stdout
+    tuple val(meta), path('*.kraken'), emit: kraken_report
+    tuple val(meta), path('*.kraken.out'), emit: kraken_stdout
 
     script:
+    def sample_name = meta[0]
     """
-    kraken2 --db ${db} --report ${reads_id}.kraken ${reads} --threads ${task.cpus} > ${reads_id}.kraken.out
+    kraken2 --db ${db} --report ${sample_name}.kraken ${reads} --threads ${task.cpus} > ${sample_name}.kraken.out
     """
 
 }

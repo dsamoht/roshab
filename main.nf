@@ -24,13 +24,16 @@ Usage:
      nextflow run main.nf --exp [NAME] --reads [PATH] --output [PATH]
 
 Arguments:
-     --exp [NAME] : name of the experiment
-     --output [PATH] : path to output directory (will be created if non-existant)
-     --reads [PATH] : path to a single file or to a directory of files
-                      (if directory, the subfolder `fastq_pass` will be used)
+    --exp [NAME] : name of the experiment
+    --output [PATH] : path to output directory (will be created if non-existant) (default: `roshab_output`)
+    --input [PATH] : path to a samplesheet (CSV) with the following columns:
+                    sample_name,date,site,reads
 
 Optional argument:
+    --skip_qc : skip quality control step
+    --setup : download the container images and exit
     -profile singularity : use Singularity as the container engine instead of the default (Docker)
+    --help : print this help message
 """
 
 log.info info
@@ -41,13 +44,13 @@ if( params.help ) {
 
 if ( !params.setup ) {
 
-if ( !params.exp) {
-    log.info "Error: experiment name not specified."
+if ( !params.input) {
+    log.info "Error: input samplesheet not specified."
     exit 1
 }
 
-if ( !params.reads) {
-    log.info "Error: reads directory not specified."
+if ( !params.exp) {
+    log.info "Error: experiment name not specified."
     exit 1
 }
 
@@ -55,6 +58,7 @@ if ( !params.output) {
     log.info "Error: output directory not specified."
     exit 1
 }
+
 }
 
 workflow {

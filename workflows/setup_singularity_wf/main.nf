@@ -84,8 +84,8 @@ workflow SETUP_SINGULARITY_WF {
           exit 0
           """
     }
-    process PORECHOP {
-          container = params.porechop_singularity
+    process PORECHOP_ABI {
+          container = params.porechop_abi_singularity
           script:
           """
           exit 0
@@ -104,6 +104,6 @@ workflow SETUP_SINGULARITY_WF {
     NANOSTAT()
     SAMTOOLS()
     QUALIMAP()
-    PORECHOP()
+    PORECHOP_ABI()
 
 }

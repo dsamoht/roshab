@@ -6,13 +6,14 @@ process NANOSTAT {
     publishDir "${params.output}/nanostat", mode: 'copy'
 
     input:
-    tuple val(reads_id), path(reads)
+    tuple val(meta), path(reads)
 
     output:
-    tuple val(reads_id), path('*.stats.tsv'), emit: tsv
+    tuple val(meta), path('*.stats.tsv'), emit: tsv
 
     script:
+    def sample_name = meta[0]
     """
-    NanoStat -o . -n ${reads_id}.stats.tsv --tsv --fastq ${reads}
+    NanoStat -o . -n ${sample_name}.stats.tsv --tsv --fastq ${reads}
     """
 }

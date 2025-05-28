@@ -6,13 +6,14 @@ process KRAKENTOOLS_KRONA {
     publishDir "${params.output}/krona", mode: 'copy'
 
     input:
-    tuple val(reads_id), path(kraken_report)
+    tuple val(meta), path(kraken_report)
 
     output:
-    tuple val(reads_id), path('*.krona.out'), emit: krakentools_to_krona
+    tuple val(meta), path('*.krona.out'), emit: krakentools_to_krona
 
     script:
+    def sample_name = meta[0]
     """
-    kreport2krona.py -r ${kraken_report} -o ${reads_id}.krona.out --no-intermediate-ranks
+    kreport2krona.py -r ${kraken_report} -o ${sample_name}.krona.out --no-intermediate-ranks
     """
 }
