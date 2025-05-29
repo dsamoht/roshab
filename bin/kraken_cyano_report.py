@@ -24,7 +24,11 @@ def top_n_taxlevel_relative_to_all(df, taxa_level="p", top_n=10):
    
     tax_level_table = df.loc[[str(i) for i in df.index if str(i).split("|")[-1].startswith(f"{taxa_level}__")]]
     top_n_by_sum = tax_level_table.loc[tax_level_table.sum(axis=1).nlargest(top_n).index]
-    others_row = (df.loc['x__cellular_organisms'] + df.loc['x__Viruses']) - top_n_by_sum.sum()
+
+    cellular = df.loc['x__cellular_organisms'] if 'x__cellular_organisms' in df.index else 0
+    viruses = df.loc['x__Viruses'] if 'x__Viruses' in df.index else 0
+    others_row = (cellular + viruses) - top_n_by_sum.sum()
+
     result_df = pd.concat([top_n_by_sum, pd.DataFrame(others_row).T.rename(index={0: 'Others'})])
     tax_level_table = result_df / result_df.sum()
     tax_level_table.index = ["|".join([j for j in i.split("|") if "x__" not in j]) for i in tax_level_table.index]
@@ -85,7 +89,6 @@ def plot_longitudinal(df, pdf_handle):
     df = df[sorted_columns]
     dates = [i.split('_XdateX_')[-1].split('_XsiteX_')[0].strip() for i in df.columns]
     sites = [i.split('_XsiteX_')[-1].strip() for i in df.columns]
-    #df.columns = dates
     if len(set(dates)) > 1:
         for site in set(sites):
             site_df = df.loc[:, [col for col in df.columns if site in col]]
