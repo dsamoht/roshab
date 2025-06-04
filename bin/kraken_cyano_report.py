@@ -102,11 +102,12 @@ def plot_longitudinal(df, pdf_handle):
 
 def main():
     args = parse_arguments()
+    name = args.name.strip().replace(' ', '_')
     df = pd.read_csv(args.input, sep='\t', header=0, index_col=0)
-    with PdfPages("kraken_cyano_barplots.pdf") as pdf_out:
+    with PdfPages(f"{name}_kraken_cyano_barplots.pdf") as pdf_out:
         plot_spatial(df, pdf_out)
         plot_longitudinal(df, pdf_out)
-    
+
 
 if __name__ == "__main__":
     main()

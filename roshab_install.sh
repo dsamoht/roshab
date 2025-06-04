@@ -19,7 +19,7 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
     else
     echo "Downloading Containers"
-    nextflow run main.nf -profile setup
+    nextflow run main.nf -profile setup -resume
     echo "Containers downloaded successfully."
     rm -rf ./work
     rm -rf .nextflow.log*

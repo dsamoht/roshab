@@ -16,21 +16,21 @@ info = """
  Taxonomic classification of ONT reads with Kraken2 and minimap2 with a focus on
  bloom-forming microorganisms.
 
-     Github: https://github.com/dsamoht/roshab-wf
+     Github: https://github.com/dsamoht/roshab
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Usage:
 
-     nextflow run main.nf --exp [NAME] --reads [PATH] --output [PATH]
+     nextflow run main.nf --exp [NAME] --input [PATH] --output [PATH]
 
 Arguments:
     --exp [NAME] : name of the experiment
     --output [PATH] : path to output directory (will be created if non-existant) (default: `roshab_output`)
     --input [PATH] : path to a samplesheet (CSV) with the following columns:
-                    sample_name,date,site,reads
+                    sample_name,date,site,group,reads
 
 Optional argument:
-    --skip_qc : skip quality control step
+    --skip_qc : skip quality control step (`porechop_abi` and `chopper`)
     --setup : download the container images and exit
     -profile singularity : use Singularity as the container engine instead of the default (Docker)
     --help : print this help message
@@ -55,8 +55,9 @@ if ( !params.exp) {
 }
 
 if ( !params.output) {
-    log.info "Error: output directory not specified."
-    exit 1
+    log.info "Warning: output directory not specified. Using default: `roshab_output`"
+    params.output = 'roshab_output'
+
 }
 
 }

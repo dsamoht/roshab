@@ -1,42 +1,41 @@
 """
-Flask app that wraps roshab-wf.nf Nextflow pipeline
+Flask app that wraps `roshab` Nextflow pipeline
 """
-from glob import glob
-import re
-import os
-from pathlib import Path
 import subprocess
 from typing import Optional
-import webbrowser
 from werkzeug.utils import secure_filename
+import os
+import pandas as pd
 
 from flask import Flask, render_template, request, flash
 from flask_socketio import emit, SocketIO
 
 
+REQUIRED_COLUMNS = ["sample_name", "date", "site", "group", "reads"]
+IMPORT_FOLDER = os.path.join(os.path.dirname(__file__), 'imports')
+
 class WorkflowSubprocess:
 
-    def __init__(self, exp_config=None):
+    def __init__(self):
         self.process: Optional[subprocess.Popen] = None
-        self.exp_config = exp_config
+        self.skip_qc = False
+        self.exp_config = {}
 
     def refresh_config(self, exp_config):
         self.exp_config = exp_config
 
-    def start_subprocess(self):
-        
-        logger_file = Path(".nextflow.log")
-        try:
-            logger_file.resolve(strict=True)
-            logger_file.unlink()
-        except FileNotFoundError:
-            pass
-
+    def start_subprocess(self, exp_config):
+        exp_config = exp_config
+        if exp_config['skip_qc'] == True:
+            skip_qc = "--skip_qc"
+        else:
+            skip_qc = ""
         try:
             self.process = subprocess.Popen(["nextflow", "run", "main.nf",
-                                        "--exp", self.exp_config["exp_id"],
-                                        "--output", self.exp_config['output_dir'],
-                                        "--reads", "/".join(app.config['UPLOAD_FOLDER'].split("/")[0:-1])],
+                                        skip_qc,
+                                        "--exp", exp_config["exp_id"],
+                                        "--output", exp_config['output_dir'],
+                                        "--input", exp_config['samplesheet']],
                                         universal_newlines=True,
                                         shell=False,
                                         stdout=subprocess.PIPE,
@@ -50,8 +49,6 @@ class WorkflowSubprocess:
         self.process = None
 
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = os.path.abspath("uploads/fastq_pass")
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 app.config["SECRET_KEY"] = '00000000'
 socketio = SocketIO(app)
 
@@ -65,11 +62,15 @@ ALLOWED_EXTENSIONS = {"fastq",
 EXP_CONFIG = {
     "exp_id": "",
     "output_dir": "",
-    "uploaded_files": [],
-    "n_barcodes": 0,
+    "samplesheet": "",
+    "filename": "",
+    "n_samples": 0,
+    "skip_qc": "not_set",
     "docker_status": False,
     "pipeline_finished": False
 }
+
+WF_SUBPROCESS = WorkflowSubprocess()
 
 def get_docker_status():
     try:
@@ -79,7 +80,6 @@ def get_docker_status():
         EXP_CONFIG["docker_status"] = False
 
 get_docker_status()
-workflow_subprocess = WorkflowSubprocess(EXP_CONFIG)
 
 def input_validation(name):
     for char in name:
@@ -92,7 +92,7 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    workflow_subprocess.refresh_config(EXP_CONFIG)
+    WF_SUBPROCESS.refresh_config(EXP_CONFIG)
     return render_template("index.html", exp_config=EXP_CONFIG)
 
 @app.route("/get_run_info_base", methods=["GET", "POST"])
@@ -100,6 +100,7 @@ def get_run_info_base():
     if request.method == "POST":
         exp_id = str(request.form.get("exp-id"))
         output_name = str(request.form.get("output-name"))
+        skip_qc = request.form.get("skip_qc") == "on"
         if not input_validation(exp_id) or not input_validation(output_name):
             exp_id = ""
             output_name = ""
@@ -108,143 +109,85 @@ def get_run_info_base():
         else:
             conf_saved_msg = "Configuration sauvegardée.\n" \
             f"Identifiant : {exp_id} \n" \
-            f"Dossier de sortie : {output_name} \n"
+            f"Dossier de sortie : {output_name} \n" \
+            f"Protocole rapide : {'Oui' if skip_qc else 'Non'} \n"
             txt_conf_saved = conf_saved_msg.split("\n")
             flash(txt_conf_saved[:-1], "success")
         EXP_CONFIG["exp_id"] = exp_id
         EXP_CONFIG["output_dir"] = output_name
+        EXP_CONFIG["skip_qc"] = skip_qc
+    
     return render_template("index.html", exp_config=EXP_CONFIG)
 
 @app.route("/refresh_config", methods=["GET", "POST"])
 def refresh_config():
     EXP_CONFIG["exp_id"] = ""
     EXP_CONFIG["output_dir"] = ""
+    EXP_CONFIG["skip_qc"] = "not_set"
     txt_message = "Configuration précédente effacée.\n".split("\n")
     flash(txt_message[:-1], "success")
     return render_template("index.html", exp_config=EXP_CONFIG)
 
-@app.route("/open_results", methods=["GET", "POST"])
-def open_results(*args, **kwargs):
-    try:
-        multiqc_path = glob(f'{EXP_CONFIG["output_dir"]}/multiqc/*.html')[-1]
-        multiqc_abs_path = os.path.abspath(multiqc_path)
-        webbrowser.open(f'file://{multiqc_abs_path}', new=2)
-    except (FileNotFoundError, IndexError):
-        txt_message = "Ouverture impossible du fichier de résultats.\n".split("\n")
-        flash(txt_message[:-1], "error")
+@app.route("/upload_samplesheet", methods=["POST"])
+def upload_samplesheet():
 
-    return render_template("index.html", exp_config=EXP_CONFIG)
-
-@app.route("/upload_directory", methods=["POST"])
-def upload_directory():
-    if "files[]" not in request.files:
+    os.makedirs(IMPORT_FOLDER, exist_ok=True)
+    if "file" not in request.files:
         txt_message = "Aucun fichier trouvé.\n".split("\n")
         flash(txt_message[:-1], "error")
         return render_template("index.html", exp_config=EXP_CONFIG)
 
-    files = request.files.getlist("files[]")
-    EXP_CONFIG["uploaded_files"] = []
+    file = request.files["file"]
+    if file.filename == "":
+        flash(["Aucun fichier sélectionné."], "error")
+        return render_template("index.html", exp_config=EXP_CONFIG)
 
-    upload_path = app.config["UPLOAD_FOLDER"]
+    filename = secure_filename(file.filename)
+    file_path = os.path.join(IMPORT_FOLDER, filename)
+    
+    file.save(file_path)
+    EXP_CONFIG["samplesheet"] = file_path
 
-    for file in files:
-        if not file.filename:
-            continue
-        if file.filename.startswith(r".") or r"/." in file.filename:
-            continue
-        if not allowed_file(file.filename):
-            continue
+    try:
+        df = pd.read_csv(file_path)
+        if list(df.columns) != REQUIRED_COLUMNS:
+            flash([f"Les colonnes du fichier doivent être exactement: {', '.join(REQUIRED_COLUMNS)}"], "error")
+            EXP_CONFIG["samplesheet"] = ""
+            return render_template("index.html", exp_config=EXP_CONFIG)
+        if df.duplicated().any():
+            flash(["Le fichier contient des lignes dupliquées."], "error")
+            EXP_CONFIG["samplesheet"] = ""
+            return render_template("index.html", exp_config=EXP_CONFIG)
 
-        filename = secure_filename(os.path.basename(file.filename))
-        file_path = os.path.join(upload_path, filename)
-        file.save(file_path)
-        EXP_CONFIG["uploaded_files"].append(filename)
+        file_path = os.path.join(IMPORT_FOLDER, filename)
+        EXP_CONFIG["n_samples"] = len(df)
+        EXP_CONFIG["filename"] = filename
+        df.to_csv(file_path, index=False)
+        EXP_CONFIG["samplesheet"] = file_path
+        flash(["Fichier téléchargé avec succès."], "success")
 
-    if EXP_CONFIG["uploaded_files"]:
+    except Exception as e:
+        EXP_CONFIG["samplesheet"] = ""
+        flash([f"Erreur lors du traitement du fichier : {str(e)}"], "error")
 
-        _file_dict = {}
-        barcode_pattern = re.compile(r'barcode\d{2}')
-        exp_id = EXP_CONFIG["exp_id"]
-
-        for file in EXP_CONFIG["uploaded_files"]:
-            match = barcode_pattern.search(file)
-            if match:
-                barcode_key = exp_id + "_" + match.group(0)
-                if barcode_key not in _file_dict:
-                    _file_dict[barcode_key] = []
-                    EXP_CONFIG["n_barcodes"] += 1
-                _file_dict[barcode_key].append(file)
-            else:
-                if exp_id not in _file_dict:
-                    _file_dict[exp_id] = []
-                _file_dict[exp_id].append(file)
-
-        n_files = len(EXP_CONFIG["uploaded_files"])
-        txt_message = f"""{n_files} fichier{"s" if n_files > 1 else ""} chargé{"s" if n_files > 1 else ""}.\n""" \
-            f"""{EXP_CONFIG['n_barcodes']} "barcode{"s" if EXP_CONFIG['n_barcodes'] > 1 else ""}" trouvé{"s" if EXP_CONFIG['n_barcodes'] > 1 else ""}.\n""".split("\n")
-        flash(txt_message[:-1], 'success')
-
-    else:
-        txt_message = "Aucun fichier trouvé.\n".split("\n")
-        flash(txt_message[:-1], "error")
-
-    EXP_CONFIG["input_dir"] = upload_path
     return render_template("index.html", exp_config=EXP_CONFIG)
 
-
-def get_initial_processes_names(log_file):
-    processes = set()
-    parsing_not_finished = True
-    while parsing_not_finished:
-        try:
-            with open(log_file, "r") as logger:
-                for line in logger:
-                    if "Starting process" in line:
-                        processes.add(line.split()[-1].strip())
-                    elif "Submitted process" in line:
-                        parsing_not_finished = False
-        except FileNotFoundError:
-            continue
-    return processes
-
+   
 @socketio.on("run_workflow")
 def run_workflow(*args, **kwargs):
 
-    workflow_subprocess.start_subprocess()
-    processes = get_initial_processes_names(".nextflow.log")
-    progression_map = dict.fromkeys(processes, False)
-    current_processes = dict.fromkeys(processes, False)
+    WF_SUBPROCESS.start_subprocess(EXP_CONFIG)
 
-    emit('logging', {'log': f"0/{len(progression_map)} terminé(s) (Mise en place des conteneurs...)"})
-    while True:
-        try:
-            if workflow_subprocess.process.poll() is not None:
-                break
+    if not WF_SUBPROCESS.process:
+        emit('workflow_output', {'data': '[Erreur] Impossible de démarrer le processus.'})
+        return
+
+    for line in iter(WF_SUBPROCESS.process.stdout):
+        if line:
             try:
-                with open(".nextflow.log", "r") as logger:
-                    for line in logger:
-                        if "status: COMPLETED; exit: 0; error: -;" in line:
-                            for software in progression_map:
-                                if software in line:
-                                    progression_map[software] = True
-                        elif "Submitted process" in line:
-                            for software in progression_map:
-                                if software in line:
-                                    current_processes[software] = True
-                                    progression_map[software] = False
-
-                progress = round(sum(progression_map.values())/len(progression_map)*100)
-                finished_processes = [soft for soft, status in progression_map.items() if status]
-                current_processes_live = [soft for soft, status in current_processes.items() if (status and soft not in finished_processes)]
-                log_message = f"{len(finished_processes)}/{len(progression_map)} terminé(s): [{', '.join(finished_processes)}] "
-                log_message += f"En cours: [{', '.join(current_processes_live)}]"
-                emit('progress', {'progress': progress})
-                emit('logging', {'log': log_message})
-
-            except FileNotFoundError:
-                return render_template('index.html', exp_config=EXP_CONFIG)
-        except AttributeError:
-            return render_template('index.html', exp_config=EXP_CONFIG)
+                emit('workflow_output', {'data': line})
+            except Exception as e:
+                emit('workflow_output', {'data': f'[Erreur d\'émission] {str(e)}'})
 
     EXP_CONFIG["pipeline_finished"] = True
     emit('finish', {'finished': True})
@@ -253,7 +196,20 @@ def run_workflow(*args, **kwargs):
 
 @socketio.on("cancel_workflow")
 def cancel_workflow(*args, **kwargs):
-    workflow_subprocess.kill_subprocess()
+    WF_SUBPROCESS.kill_subprocess()
+    EXP_CONFIG = {
+    "exp_id": "",
+    "output_dir": "",
+    "samplesheet": "",
+    "filename": "",
+    "n_samples": 0,
+    "skip_qc": "not_set",
+    "docker_status": "false",
+    "pipeline_finished": False
+    }
+    get_docker_status()
+    WF_SUBPROCESS.refresh_config(EXP_CONFIG)
+    return render_template("index.html", exp_config=EXP_CONFIG)
 
 
 if __name__ == "__main__":

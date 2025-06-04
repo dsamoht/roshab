@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RosHAB Tool</title>
+    <title>RosHAB - GUI</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/bootstrap-5.3.3-dist/css/bootstrap.css') }}">
     <script src="{{ url_for('static',filename='js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static',filename='js/jquery-3.6.0.js') }}"></script>
@@ -66,26 +66,33 @@
     <div class="row d-flex">
     <div class="col-md-6 d-flex">
     <div class="card mt-4 w-100">
-      <h5 class="card-header">1. CONFIGURATION</h5>
+      <h5 class="card-header">1. INFORMATIONS</h5>
       <div class="card-body">
         <form method="POST" action="/get_run_info_base" id="exp-base-config">
           <div class="mb-2">
             {% if exp_config['exp_id'] %}
-            <label for="exp-id">IDENTIFAINT</label>
+            <label for="exp-id">Identifiant</label>
             <input type="text" class="form-control" name="exp-id" value="{{ exp_config['exp_id'] }}" style="color:green" required disabled>
             {% else %}
-            <label for="exp-id">IDENTIFIANT</label>
+            <label for="exp-id">Identifiant</label>
             <input type="text" class="form-control" name="exp-id" placeholder="ex: ROSHAB_EXP_YYYYMMDD" required>
             {% endif %}
           </div>
           <div class="mb-2">
             {% if exp_config['output_dir'] %}
-            <label for="exp-id">DOSSIER DES RÉSULTATS</label>
+            <label for="exp-id">Dossier de sortie</label>
             <input type="text" class="form-control" name="output-name" value="{{ exp_config['output_dir'] }}" style="color:green" required disabled>
             {% else %}
-            <label for="exp-id">DOSSIER DES RÉSULTATS</label>
+            <label for="exp-id">Dossier de sortie</label>
             <input type="text" class="form-control" name="output-name" placeholder="ex: ROSHAB_EXP_YYYYMMDD_out" required>
             {% endif %}
+            <br>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="skip-qc-switch" name="skip_qc"
+                    {% if exp_config['skip_qc'] != 'not_set' and exp_config['skip_qc'] %} disabled checked {% endif %}
+                    {% if exp_config['skip_qc'] != 'not_set' and not exp_config['skip_qc'] %} disabled {% endif %}>
+              <label class="form-check-label" for="skip-qc-switch">Protocole rapide</label>
+          </div>
           </div>
           {% if exp_config['exp_id'] and exp_config['output_dir'] %}
           <button type="submit" class="btn btn-primary mb-2" id="save-config-btn" disabled>Sauvegarder</button>
@@ -94,6 +101,7 @@
           <button type="submit" class="btn btn-primary mb-2" id="save-config-btn">Sauvegarder</button>
           <button type="submit" formaction="/refresh_config" class="btn btn-primary mb-2" id="refresh-config-btn" disabled>Modifier</button>
           {% endif %}
+
         </form>
       </div>
     </div>
@@ -101,23 +109,20 @@
 
     <div class="col-md-6 d-flex">
     <div class="card mt-4 w-100">
-      <h5 class="card-header">2. SÉLECTION DES FICHIERS</h5>
+      <h5 class="card-header">2. FICHIER D'ENTRÉE</h5>
       <div class="card-body">
-        <form action="/upload_directory" method="POST" enctype="multipart/form-data" class="mb-2">
+        <form action="/upload_samplesheet" method="POST" enctype="multipart/form-data" class="mb-2">
           <div class="input-group">
-            <input id="file-selector-btn" type="file" class="form-control" name="files[]" webkitdirectory directory multiple>
-            <button id="file-uploader-btn" type="submit" class="btn btn-primary">CHARGEMENT DES FICHIERS</button>
+            <input id="file-selector-btn" type="file" class="form-control" name="file">
+            <button id="file-uploader-btn" type="submit" class="btn btn-primary">Importer</button>
           </div>
         </form>
-        <div id="uploaded-files">
-          {% if exp_config['uploaded_files']|length > 1 %}
-          <h5><span class="badge bg-success text-white">{{ exp_config['uploaded_files']|length }}</span> FICHIERS TROUVÉS</h5>
-          {% elif exp_config['uploaded_files']|length == 0 %}
-          <h5><span class="badge bg-warning text-white">{{ exp_config['uploaded_files']|length }}</span> FICHIER TROUVÉ</h5>
-          {% else %}
-          <h5><span class="badge bg-success text-white">{{ exp_config['uploaded_files']|length }}</span> FICHIER TROUVÉ</h5>
+          {% if exp_config['samplesheet'] %}
+            <div class="alert alert-info mt-3">
+                <strong>Fichier chargé :</strong> {{ exp_config['filename'] }}<br>
+                <strong>Nombre d'échantillon(s) :</strong> {{ exp_config['n_samples'] }}
+            </div>
           {% endif %}
-        </div>
       </div>
     </div>
   </div>
@@ -127,16 +132,16 @@
       <h5 class="card-header">3. ANALYSE</h5>
       <div class="card-body">
           <div class="mb-2">
-            {% if exp_config['exp_id'] and exp_config['output_dir'] and exp_config['docker_status'] and exp_config['uploaded_files'] %}
+            {% if exp_config['exp_id'] and exp_config['output_dir'] and exp_config['docker_status'] and exp_config['samplesheet'] %}
             <button type="button" class="btn btn-success text-white" id="run-workflow-btn">Commencer</button>
             {% else %}
             <button type="button" class="btn btn-success text-white" id="run-workflow-btn" disabled>Commencer</button>
             {% endif %}
             <button type="button" id="cancel-workflow-btn" class="btn btn-danger text-white" data-bs-html="true" data-toggle="tooltip" data-placement="top" title="<u>ATTENTION</u>: l'application devra être fermée avant d'être relancée." disabled>Annuler</button>
           </div>
-          <h5 class="h5">Progression :<span id="workflow-progress-str" class="ms-2 text-body" style="font-size: 14px;"></span></h5>
-          <div class="progress" role="progressbar">
-            <div class="progress-bar progress-bar-striped progress-bar-animated"></div>
+          <div class="mt-3">
+            <h6>Progression :</h6>
+            <pre id="workflow-terminal" style="height: 300px; overflow-y: scroll; background-color: #ffffff; color: rgb(0, 94, 255); padding: 10px; font-family: monospace; font-size: 13px; border-radius: 5px; border: 1px solid black;"></pre>
           </div>
       </div>
     </div>
@@ -149,7 +154,6 @@
       </div>
     </div>
     </form>
-  
   </div>
 
   <script>
@@ -200,11 +204,16 @@
             $('#cancel-workflow-btn').prop('disabled', true);
             $('#open-results-btn').prop('disabled', false);
         });
+    
+    socket.on("workflow_output", function (msg) {
+      const terminal = document.getElementById("workflow-terminal");
+      terminal.textContent += msg.data;
+      terminal.scrollTop = terminal.scrollHeight;
+        });
 
     $('#open-results-btn').click(function() {
             $('#open-results-btn').prop('disabled', true);
-    });
-        
+    });        
 
     document.addEventListener('DOMContentLoaded', function() {
       var toasts = document.querySelectorAll('.toast')
@@ -215,5 +224,6 @@
     });
   
   </script>
+
 </body>
 </html>

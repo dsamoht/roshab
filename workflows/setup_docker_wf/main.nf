@@ -6,13 +6,6 @@ workflow SETUP_DOCKER_WF {
           exit 0
           """
     }
-     process BRACKEN {
-          container = params.bracken_docker
-          script:
-          """
-          exit 0
-          """
-    }
      process KRAKENTOOLS {
           container = params.krakentools_docker
           script:
@@ -36,13 +29,6 @@ workflow SETUP_DOCKER_WF {
     }
      process CHOPPER {
           container = params.chopper_docker
-          script:
-          """
-          exit 0
-          """
-    }
-     process FASTQC {
-          container = params.fastqc_docker
           script:
           """
           exit 0
@@ -76,8 +62,8 @@ workflow SETUP_DOCKER_WF {
           exit 0
           """
     }
-    process QUALIMAP {
-          container = params.qualimap_docker
+    process PANDAS {
+          container = params.pandas_docker
           script:
           """
           exit 0
@@ -92,17 +78,15 @@ workflow SETUP_DOCKER_WF {
     }
 
     KRAKEN()
-    BRACKEN()
     KRAKENTOOLS()
     KRONA()
+    PANDAS()
     PYTHON()
     CHOPPER()
-    FASTQC()
     MULTIQC()
     MINIMAP()
     NANOSTAT()
     SAMTOOLS()
-    QUALIMAP()
     PORECHOP_ABI()
 
 }

@@ -30,6 +30,7 @@ def plot_longitudinal(df, pdf_handle):
             ax = site_df.plot(x='date',
             kind='bar',
             stacked=False,
+            edgecolor='black',
             figsize=(10, 6),
             ylabel='Read counts',
             xlabel='Date',
@@ -54,6 +55,7 @@ def plot_spatial(df, pdf_handle):
         ax = df.plot(x='site',
         kind='bar',
         stacked=False,
+        edgecolor='black',
         figsize=(10, 6),
         ylabel='Read counts',
         xlabel='Site',
@@ -73,6 +75,7 @@ def plot_spatial(df, pdf_handle):
 def main():
     args = parse_arguments()
     list_of_samples = []
+    group_id = args.group.strip().replace(' ', '_')
     for i, name in enumerate(args.names):
         info_dict = {}
         info_dict['sample'] = name.split('XsampleX_')[1].split('_XdateX_')[0].strip()
@@ -86,7 +89,7 @@ def main():
     df = df.sort_values("date")
     df['date'] = df['date'].dt.strftime('%Y-%m-%d')
 
-    with PdfPages("toxin_barplots.pdf") as pdf_out:
+    with PdfPages(f"{group_id}_toxin_barplots.pdf") as pdf_out:
         plot_spatial(df, pdf_out)
         plot_longitudinal(df, pdf_out)
 
