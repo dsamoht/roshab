@@ -26,25 +26,25 @@ if ! docker info > /dev/null 2>&1; then
     rm -rf .nextflow
 fi
 
-if command_exists python || command_exists python3; then
-    echo "Python is installed. Current version:"
-    python --version || python3 --version
+if command_exists python3; then
+    echo "Python 3 is installed. Current version:"
+    python3 --version
     else
-    echo "Install Python before executing this script."
+    echo "Install Python 3 before executing this script."
     exit 1
 fi
 
-if command_exists python -m pip || command_exists python3 -m pip; then
+if command_exists "python3 -m pip"; then
     echo "pip is installed. Updating..."
-    python -m pip install --upgrade pip || python3 -m pip install --upgrade pip
+    python3 -m pip install --upgrade pip
     else
     echo "Install pip before executing this script."
     exit 1
 fi
 
-if command_exists python -m venv || command_exists python3 -m venv; then
+if command_exists python3 -m venv; then
     echo "Creating virtual environment 'roshab_env'..."
-    python -m venv roshab_env || python3 -m venv roshab_env
+    python3 -m venv roshab_env
     else
     echo "Install venv before executing this script."
     exit 1

@@ -119,8 +119,11 @@
         </form>
           {% if exp_config['samplesheet'] %}
             <div class="alert alert-info mt-3">
-                <strong>Fichier chargé :</strong> {{ exp_config['filename'] }}<br>
-                <strong>Nombre d'échantillon(s) :</strong> {{ exp_config['n_samples'] }}
+              <strong>Fichier chargé :</strong> {{ exp_config['filename'] }}<br>
+              <strong>Nombre d'échantillon(s) :</strong> {{ exp_config['n_samples'] }}
+              <form action="{{ url_for('remove_samplesheet') }}" method="POST" class="mt-2">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+              </form>
             </div>
           {% endif %}
       </div>
@@ -175,27 +178,12 @@
 
     $('#cancel-workflow-btn').click(function() {
             socket.emit('cancel_workflow', {});
-            $('.progress-bar').addClass("bg-warning");
-            $('#run-workflow-btn').html('Commencer')
-            .prop('disabled', true);
-            $('#file-selector-btn').prop('disabled', true);
-            $('#file-uploader-btn').prop('disabled', true);
-            $('#refresh-config-btn').prop('disabled', true);
-            $('#cancel-workflow-btn').prop('disabled', true);
+            setTimeout(() => {
+                location.reload();
+            }, 300);
         });
     
-    socket.on('progress', function(data) {
-            var progress = data.progress;
-            $('.progress-bar').css('width', progress + '%');
-        });
-
-    socket.on('logging', function(data) {
-            var log = data.log;
-            $('#workflow-progress-str').html(log);
-        });
-
     socket.on('finish', function(data) {
-            $('.progress-bar').addClass("bg-success");
             $('#run-workflow-btn').html('Commencer')
             .prop('disabled', true);
             $('#file-selector-btn').prop('disabled', true);
@@ -213,7 +201,11 @@
 
     $('#open-results-btn').click(function() {
             $('#open-results-btn').prop('disabled', true);
-    });        
+        });
+    
+    socket.on('redirect_after_cancel', function(data) {
+      window.location.href = data.url;
+        });
 
     document.addEventListener('DOMContentLoaded', function() {
       var toasts = document.querySelectorAll('.toast')

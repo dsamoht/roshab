@@ -1,5 +1,5 @@
 """
-Flask app that wraps `roshab` Nextflow pipeline
+Flask app that wraps `roshab` pipeline
 """
 import subprocess
 from typing import Optional
@@ -7,12 +7,92 @@ from werkzeug.utils import secure_filename
 import os
 import pandas as pd
 
-from flask import Flask, render_template, request, flash
+from flask import Flask, redirect, render_template, request, flash, url_for
 from flask_socketio import emit, SocketIO
 
 
-REQUIRED_COLUMNS = ["sample_name", "date", "site", "group", "reads"]
+REQUIRED_COLUMNS = [
+    "sample_name",
+    "date",
+    "site",
+    "group",
+    "reads"
+]
+ALLOWED_EXTENSIONS = {
+    "fastq",
+    "fastq.gz",
+    "fq", 
+    "fq.gz"
+}
+
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = '00000000'
+socketio = SocketIO(app)
+
 IMPORT_FOLDER = os.path.join(os.path.dirname(__file__), 'imports')
+
+
+class ExpConfig:
+    def __init__(self):
+        self._config = {
+            "exp_id": "",
+            "output_dir": "",
+            "samplesheet": "",
+            "filename": "",
+            "n_samples": 0,
+            "skip_qc": "not_set",
+            "docker_status": False,
+            "pipeline_finished": False
+        }
+        self.update_docker_status()
+
+    def get(self, key):
+        return self._config.get(key)
+
+    def set(self, key, value):
+        self._config[key] = value
+
+    def update(self, **kwargs):
+        self._config.update(kwargs)
+
+    def as_dict(self):
+        return self._config
+
+    def reset(self, keep_uploaded=False):
+        filename = self._config["filename"]
+        samplesheet = self._config["samplesheet"]
+        n_samples = self._config["n_samples"]
+        self.__init__()
+        if keep_uploaded:
+            self._config.update({
+                "filename": filename,
+                "samplesheet": samplesheet,
+                "n_samples": n_samples
+            })
+
+    def update_docker_status(self):
+        try:
+            subprocess.check_output("docker info", shell=True)
+            self._config["docker_status"] = True
+        except subprocess.CalledProcessError:
+            self._config["docker_status"] = False
+
+    def is_ready_for_run(self):
+        return all([
+            self._config["exp_id"],
+            self._config["output_dir"],
+            self._config["samplesheet"],
+            self._config["docker_status"]
+        ])
+
+    def delete_uploaded_file(self):
+        if self._config["samplesheet"] and os.path.exists(self._config["samplesheet"]):
+            os.remove(self._config["samplesheet"])
+            self._config["samplesheet"] = ""
+            self._config["filename"] = ""
+            self._config["n_samples"] = 0
+
 
 class WorkflowSubprocess:
 
@@ -41,49 +121,21 @@ class WorkflowSubprocess:
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
         except Exception as err:
-            print(f"Failed to start WorkflowSubprocess: {err}")
+            emit('workflow_output', {'data': f'{err}'})
             self.process = None
 
     def kill_subprocess(self):
         self.process.kill()
         self.process = None
 
-app = Flask(__name__)
-app.config["SECRET_KEY"] = '00000000'
-socketio = SocketIO(app)
-
-ALLOWED_EXTENSIONS = {"fastq",
-                      "fastq.gz",
-                      "fasta",
-                      "fasta.gz",
-                      "fq", 
-                      "fq.gz"}
-
-EXP_CONFIG = {
-    "exp_id": "",
-    "output_dir": "",
-    "samplesheet": "",
-    "filename": "",
-    "n_samples": 0,
-    "skip_qc": "not_set",
-    "docker_status": False,
-    "pipeline_finished": False
-}
 
 WF_SUBPROCESS = WorkflowSubprocess()
+EXP_CONFIG = ExpConfig()
 
-def get_docker_status():
-    try:
-        subprocess.check_output("docker info", shell=True)
-        EXP_CONFIG["docker_status"] = True
-    except subprocess.CalledProcessError:
-        EXP_CONFIG["docker_status"] = False
-
-get_docker_status()
 
 def input_validation(name):
     for char in name:
-        if char in [r"?", "\\", r"/", r".", r",", r":", r";"]:
+        if char in [r"?", "\\", r"/", r".", r",", r":", r";", r" "]:
             return False
     return True
 
@@ -92,8 +144,21 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    WF_SUBPROCESS.refresh_config(EXP_CONFIG)
-    return render_template("index.html", exp_config=EXP_CONFIG)
+    WF_SUBPROCESS.refresh_config(EXP_CONFIG.as_dict())
+    return render_template("index.html", exp_config=EXP_CONFIG.as_dict())
+
+@app.route("/reset_all", methods=["GET"])
+def reset_all():
+    EXP_CONFIG.delete_uploaded_file()
+    EXP_CONFIG.reset()
+    WF_SUBPROCESS.refresh_config(EXP_CONFIG.as_dict())
+    return redirect(url_for("index"))
+
+@app.route("/remove_samplesheet", methods=["POST"])
+def remove_samplesheet():
+    EXP_CONFIG.delete_uploaded_file()
+    flash(["Fichier supprimé."], "success")
+    return redirect(url_for("index"))
 
 @app.route("/get_run_info_base", methods=["GET", "POST"])
 def get_run_info_base():
@@ -113,70 +178,55 @@ def get_run_info_base():
             f"Protocole rapide : {'Oui' if skip_qc else 'Non'} \n"
             txt_conf_saved = conf_saved_msg.split("\n")
             flash(txt_conf_saved[:-1], "success")
-        EXP_CONFIG["exp_id"] = exp_id
-        EXP_CONFIG["output_dir"] = output_name
-        EXP_CONFIG["skip_qc"] = skip_qc
+        EXP_CONFIG.update(exp_id=exp_id, output_dir=output_name, skip_qc=skip_qc)
     
-    return render_template("index.html", exp_config=EXP_CONFIG)
+    return render_template("index.html", exp_config=EXP_CONFIG.as_dict())
 
 @app.route("/refresh_config", methods=["GET", "POST"])
 def refresh_config():
-    EXP_CONFIG["exp_id"] = ""
-    EXP_CONFIG["output_dir"] = ""
-    EXP_CONFIG["skip_qc"] = "not_set"
+    EXP_CONFIG.reset(keep_uploaded=True)
     txt_message = "Configuration précédente effacée.\n".split("\n")
     flash(txt_message[:-1], "success")
-    return render_template("index.html", exp_config=EXP_CONFIG)
+    return render_template("index.html", exp_config=EXP_CONFIG.as_dict())
 
 @app.route("/upload_samplesheet", methods=["POST"])
 def upload_samplesheet():
 
     os.makedirs(IMPORT_FOLDER, exist_ok=True)
-    if "file" not in request.files:
-        txt_message = "Aucun fichier trouvé.\n".split("\n")
-        flash(txt_message[:-1], "error")
-        return render_template("index.html", exp_config=EXP_CONFIG)
+    if "file" not in request.files or request.files["file"].filename == "":
+        flash(["Aucun fichier sélectionné."], "error")
+        return redirect(url_for("index"))
 
     file = request.files["file"]
-    if file.filename == "":
-        flash(["Aucun fichier sélectionné."], "error")
-        return render_template("index.html", exp_config=EXP_CONFIG)
-
     filename = secure_filename(file.filename)
     file_path = os.path.join(IMPORT_FOLDER, filename)
-    
     file.save(file_path)
-    EXP_CONFIG["samplesheet"] = file_path
 
     try:
         df = pd.read_csv(file_path)
         if list(df.columns) != REQUIRED_COLUMNS:
             flash([f"Les colonnes du fichier doivent être exactement: {', '.join(REQUIRED_COLUMNS)}"], "error")
-            EXP_CONFIG["samplesheet"] = ""
-            return render_template("index.html", exp_config=EXP_CONFIG)
+            return render_template("index.html", exp_config=EXP_CONFIG.as_dict())
         if df.duplicated().any():
             flash(["Le fichier contient des lignes dupliquées."], "error")
-            EXP_CONFIG["samplesheet"] = ""
-            return render_template("index.html", exp_config=EXP_CONFIG)
+            return render_template("index.html", exp_config=EXP_CONFIG.as_dict())
 
-        file_path = os.path.join(IMPORT_FOLDER, filename)
-        EXP_CONFIG["n_samples"] = len(df)
-        EXP_CONFIG["filename"] = filename
         df.to_csv(file_path, index=False)
-        EXP_CONFIG["samplesheet"] = file_path
+        EXP_CONFIG.update(samplesheet=file_path, filename=filename, n_samples=len(df))
         flash(["Fichier téléchargé avec succès."], "success")
 
     except Exception as e:
-        EXP_CONFIG["samplesheet"] = ""
         flash([f"Erreur lors du traitement du fichier : {str(e)}"], "error")
 
-    return render_template("index.html", exp_config=EXP_CONFIG)
+    return redirect(url_for("index"))
 
    
 @socketio.on("run_workflow")
 def run_workflow(*args, **kwargs):
-
-    WF_SUBPROCESS.start_subprocess(EXP_CONFIG)
+    if not EXP_CONFIG.is_ready_for_run():
+        emit('workflow_output', {'data': '[Erreur] Configuration incomplète.'})
+        return
+    WF_SUBPROCESS.start_subprocess(EXP_CONFIG.as_dict())
 
     if not WF_SUBPROCESS.process:
         emit('workflow_output', {'data': '[Erreur] Impossible de démarrer le processus.'})
@@ -189,28 +239,14 @@ def run_workflow(*args, **kwargs):
             except Exception as e:
                 emit('workflow_output', {'data': f'[Erreur d\'émission] {str(e)}'})
 
-    EXP_CONFIG["pipeline_finished"] = True
+    EXP_CONFIG.set("pipeline_finished", True)
     emit('finish', {'finished': True})
 
     return render_template('index.html', exp_config=EXP_CONFIG)
 
 @socketio.on("cancel_workflow")
 def cancel_workflow(*args, **kwargs):
-    WF_SUBPROCESS.kill_subprocess()
-    EXP_CONFIG = {
-    "exp_id": "",
-    "output_dir": "",
-    "samplesheet": "",
-    "filename": "",
-    "n_samples": 0,
-    "skip_qc": "not_set",
-    "docker_status": "false",
-    "pipeline_finished": False
-    }
-    get_docker_status()
-    WF_SUBPROCESS.refresh_config(EXP_CONFIG)
-    return render_template("index.html", exp_config=EXP_CONFIG)
-
+    emit("redirect_after_cancel", {"url": url_for("reset_all")})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)
