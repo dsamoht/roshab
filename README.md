@@ -24,8 +24,8 @@
 - [Docker](https://www.docker.com/)
 - Pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
 - RosHAB-specific databases:
-  - [Cyanotoxin-related biosynthetic gene clusters + orthologs](https://zenodo.org/records/15659134/files/BGC_cyanotoxins_plus_orthologs.fna)
-  - [Cyanobacteriota genomes from NCBI](https://zenodo.org/records/15659134/files/cyanobacteriota_ncbi_dRep_n220.tar.gz)
+  - [BGC_cyanotoxins_plus_orthologs.fna](https://zenodo.org/records/15659134/files/BGC_cyanotoxins_plus_orthologs.fna) : Cyanotoxin-related biosynthetic gene clusters + orthologs
+  - [cyanobacteriota_ncbi_dRep_n220](https://zenodo.org/records/15659134/files/cyanobacteriota_ncbi_dRep_n220.tar.gz) : Dereplicated Cyanobacteriota genomes from NCBI
 
 - __Edit__ *nextflow.config* :  
   ```  
