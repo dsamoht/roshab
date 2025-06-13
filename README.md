@@ -22,11 +22,16 @@
 
 - [Nextflow](https://www.nextflow.io/)  
 - [Docker](https://www.docker.com/)
-- A pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
+- Pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
+- RosHAB-specific databases:
+  - [Cyanotoxin-related biosynthetic gene clusters + orthologs](https://zenodo.org/records/15659134/files/BGC_cyanotoxins_plus_orthologs.fna)
+  - [Cyanobacteriota genomes from NCBI](https://zenodo.org/records/15659134/files/cyanobacteriota_ncbi_dRep_n220.tar.gz)
 
 - __Edit__ *nextflow.config* :  
   ```  
   kraken_db = '/absolute/path/to/extracted/kraken2/database'
+  coverm_ncbi_db = '/absolute/path/to/extracted/cyanobacteriota_ncbi_dRep_n220'
+  minimap_gene_db = '/absolute/path/to/BGC_cyanotoxins_plus_orthologs.fna'
   ```
 ### Run the pipeline
 > *__Note__* : the first execution will download container images for future use
@@ -38,7 +43,3 @@ nextflow run main.nf -profile setup
 ```
 nextflow run main.nf --help
 ```
-
-### GUI (Currently in development)  
-
-![alt text](assets/roshab-gui.png)
