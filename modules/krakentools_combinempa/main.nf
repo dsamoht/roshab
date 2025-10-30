@@ -1,8 +1,5 @@
 process KRAKENTOOLS_COMBINEMPA {
 
-    container workflow.containerEngine == 'singularity' ?
-        params.krakentools_singularity : params.krakentools_docker
-
     input:
     tuple val(group_id), val(metas), path(files)
 

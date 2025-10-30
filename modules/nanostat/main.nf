@@ -1,8 +1,5 @@
 process NANOSTAT {
 
-    container workflow.containerEngine == 'singularity' ?
-        params.nanostat_singularity : params.nanostat_docker
-
     publishDir "${params.output}/nanostat", mode: 'copy'
 
     input:

@@ -1,8 +1,5 @@
 process KRAKENTOOLS_KREPORT2MPA {
 
-    container workflow.containerEngine == 'singularity' ?
-        params.krakentools_singularity : params.krakentools_docker
-
     publishDir "${params.output}/kraken", mode: 'copy'
 
     input:

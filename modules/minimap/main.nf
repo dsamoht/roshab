@@ -1,8 +1,5 @@
 process MINIMAP {
 
-    container workflow.containerEngine == 'singularity' ?
-        params.minimap_singularity : params.minimap_docker
-
     input:
     tuple val(meta), path(reads)
     path nucleotideFasta

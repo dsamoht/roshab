@@ -1,0 +1,9 @@
+app/imports/*
+app/output/*
+.gitignore
+.dockerignore
+Dockerfile*
+docker-compose.yaml
+README.md
+database/*
+test_data/*

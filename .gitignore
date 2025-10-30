@@ -4,5 +4,3 @@
 test/*
 .DS_store
 *__pycache__*
-*roshab_env*
-*uploads*

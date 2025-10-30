@@ -1,11 +1,5 @@
 process PORECHOP_ABI {
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.porechop_abi_singularity
-    } else {
-        container = params.porechop_abi_docker
-    }
-
     input:
     tuple val(meta), path(reads)
 

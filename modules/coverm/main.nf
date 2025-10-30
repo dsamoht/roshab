@@ -1,8 +1,5 @@
 process COVERM {
 
-    container workflow.containerEngine == 'singularity' ?
-            params.coverm_singularity : params.coverm_docker
-
     publishDir "${params.output}/coverm", mode: 'copy'
 
     input:

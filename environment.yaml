@@ -1,0 +1,23 @@
+name: roshab_env
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - chopper
+  - coverm
+  - kraken2
+  - krakentools
+  - minimap2
+  - multiqc
+  - nanostat
+  - porechop_abi
+  - samtools
+  - nextflow
+  - pip
+
+  - pip:
+      - Flask
+      - Flask-SocketIO
+      - pandas
+      - matplotlib

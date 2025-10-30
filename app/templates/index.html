@@ -11,9 +11,17 @@
 </head>
 <style>
   .card {
-      border-left: 5px solid green;
+      border: 1px solid #121F3F;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
+
+  #samples-table .reads {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 250px;
+}
+
 </style>
 <body>
   <div class="container mt-4 mb-4">
@@ -28,8 +36,8 @@
             {% else %}bg-info text-white{% endif %}">
             <strong class="me-auto">
               {% if category == 'error' %}Erreur
-              {% elif category == 'success' %}Succès
-              {% else %}Info{% endif %}
+              {% elif category == 'success' %}Mise à jour
+              {% else %}Information{% endif %}
             </strong>
             <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
           </div>
@@ -44,98 +52,107 @@
     {% endwith %}
   </div>
 
-    <div>
+  <div>
     <div class="card">
-      <h5 class="card-header"><b>RosHAB</b> : DÉTECTION RAPIDE DES PROLIFÉRATIONS D'ALGUES NUISIBLES SUR LE TERRAIN</h5>
-      <div class="d-flex flex-row">
-        <div class="border-end border-3 border-dark">
+      <h5 class="card-header"><b>TABLEAU DE BORD </b>POUR ANALYSES GÉNOMIQUES</h5>
+      <div class="card-body">
+        <div>
           <img src="{{ url_for('static',filename='img/logo_inst.png') }}" class="center-block" style="width: 207px; height: 60px;">
-        </div>
-        <div class="border-end border-3">
-         <img src="{{ url_for('static',filename='img/bloom_orig.png') }}" class="center-block" style="width: 207px; height: 70px;">
         </div>
       </div>
     </div>
    </div>
-    {% if not exp_config['docker_status'] %}
-          <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
-            <strong><u>DOCKER EST INACTIF</u>.</strong> Vous devez activer DOCKER et redémarrer l'application.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-    {% endif %}
-    <div class="row d-flex">
-    <div class="col-md-6 d-flex">
-    <div class="card mt-4 w-100">
+
+   <br>
+
+    <div class="card">
       <h5 class="card-header">1. INFORMATIONS</h5>
-      <div class="card-body">
+        <div class="card-body">
         <form method="POST" action="/get_run_info_base" id="exp-base-config">
           <div class="mb-2">
             {% if exp_config['exp_id'] %}
-            <label for="exp-id">Identifiant</label>
+            <label for="exp-id">Nom de l'analyse</label>
             <input type="text" class="form-control" name="exp-id" value="{{ exp_config['exp_id'] }}" style="color:green" required disabled>
             {% else %}
-            <label for="exp-id">Identifiant</label>
-            <input type="text" class="form-control" name="exp-id" placeholder="ex: ROSHAB_EXP_YYYYMMDD" required>
+            <label for="exp-id">Nom de l'analyse</label>
+            <input type="text" class="form-control" name="exp-id" placeholder="ex: LAC_B_AAAA-MM-JJ" required minlength="3" maxlength="20">
             {% endif %}
           </div>
-          <div class="mb-2">
-            {% if exp_config['output_dir'] %}
-            <label for="exp-id">Dossier de sortie</label>
-            <input type="text" class="form-control" name="output-name" value="{{ exp_config['output_dir'] }}" style="color:green" required disabled>
-            {% else %}
-            <label for="exp-id">Dossier de sortie</label>
-            <input type="text" class="form-control" name="output-name" placeholder="ex: ROSHAB_EXP_YYYYMMDD_out" required>
-            {% endif %}
-            <br>
             <div class="form-check form-switch mb-2">
               <input class="form-check-input" type="checkbox" id="skip-qc-switch" name="skip_qc"
-                    {% if exp_config['skip_qc'] != 'not_set' and exp_config['skip_qc'] %} disabled checked {% endif %}
-                    {% if exp_config['skip_qc'] != 'not_set' and not exp_config['skip_qc'] %} disabled {% endif %}>
-              <label class="form-check-label" for="skip-qc-switch">Protocole rapide</label>
-          </div>
-          </div>
-          {% if exp_config['exp_id'] and exp_config['output_dir'] %}
-          <button type="submit" class="btn btn-primary mb-2" id="save-config-btn" disabled>Sauvegarder</button>
-          <button type="submit" formaction="/refresh_config" class="btn btn-primary mb-2" id="refresh-config-btn">Modifier</button>
-          {% else %}
-          <button type="submit" class="btn btn-primary mb-2" id="save-config-btn">Sauvegarder</button>
-          <button type="submit" formaction="/refresh_config" class="btn btn-primary mb-2" id="refresh-config-btn" disabled>Modifier</button>
-          {% endif %}
-
+                  {% if exp_config['skip_qc'] == True %} checked {% endif %}
+                  {% if exp_config['exp_id'] %} disabled {% endif %}>
+              <label class="form-check-label" for="skip-qc-switch">Contrôle qualité des lectures (filtration, élagage)</label>
+            </div>
+              {% if exp_config['exp_id'] %}
+              <button type="submit" class="btn btn-primary mb-2" id="save-config-btn" disabled>Sauvegarder</button>
+              <button type="submit" formaction="/refresh_config" class="btn btn-primary mb-2" id="refresh-config-btn">Modifier</button>
+              {% else %}
+              <button type="submit" class="btn btn-primary mb-2" id="save-config-btn">Sauvegarder</button>
+              <button type="submit" formaction="/refresh_config" class="btn btn-primary mb-2" id="refresh-config-btn" disabled>Modifier</button>
+              {% endif %}
         </form>
-      </div>
-    </div>
+        </div>
     </div>
 
-    <div class="col-md-6 d-flex">
-    <div class="card mt-4 w-100">
+    <br>
+
+    <div class="card">
       <h5 class="card-header">2. FICHIER D'ENTRÉE</h5>
       <div class="card-body">
-        <form action="/upload_samplesheet" method="POST" enctype="multipart/form-data" class="mb-2">
-          <div class="input-group">
-            <input id="file-selector-btn" type="file" class="form-control" name="file">
-            <button id="file-uploader-btn" type="submit" class="btn btn-primary">Importer</button>
+        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+          <div class="btn-group me-2" role="group" aria-label="Third group">
+            <button type="button" class="btn btn-primary mb-2" id="reinitialize-table-btn" title="<u>Écrasera</u> vos modification actuelles." data-bs-html="true" data-bs-toggle="tooltip">Générer feuille</button>
           </div>
-        </form>
+        </div>
+
+    <form method="POST" action="/update_samples" id="samples-table-form">
+      <br>
+        <table class="table table-bordered table-striped" id="samples-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Date</th>
+                    <th>Site</th>
+                    <th>Groupe</th>
+                    <th>Lectures</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in table_rows %}
+                <tr>
+                    <td><input name="sample_name" type="text" class="form-control" value="{{ row.sample_name }}" required minlength="3" maxlength="20"></td>
+                    <td><input name="date" type="date" class="form-control" value="{{ row.date }}" required></td>
+                    <td><input name="site" type="text" class="form-control" value="{{ row.site }}" required minlength="3" maxlength="20"></td>
+                    <td><input name="group" type="text" class="form-control" value="{{ row.group }}" required minlength="3" maxlength="20"></td>
+                    <td><input name="reads" type="text" class="form-control" value="{{ row.reads }}" title="{{ row.reads }}" data-bs-toggle="tooltip" required></td>
+                    <td><button type="button" class="btn btn-danger btn-sm remove-row">x</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary" id="save-table-btn">Sauvegarder</button>
+    </form>
           {% if exp_config['samplesheet'] %}
             <div class="alert alert-info mt-3">
-              <strong>Fichier chargé :</strong> {{ exp_config['filename'] }}<br>
-              <strong>Nombre d'échantillon(s) :</strong> {{ exp_config['n_samples'] }}
-              <form action="{{ url_for('remove_samplesheet') }}" method="POST" class="mt-2">
+              <strong>Feuille validée :</strong> {{ exp_config['samplesheet'] }}<br>
+              <strong>Nombre d'échantillon(s) :</strong> {{ exp_config['n_samples'] }}<br>
+              <form action="/remove_samplesheet" method="POST" class="mt-2">
                 <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
               </form>
             </div>
           {% endif %}
-      </div>
-    </div>
-  </div>
-  </div>
+     </div>
+   </div>
 
-    <div class="card mt-4">
+   <br>
+
+    <div class="card">
       <h5 class="card-header">3. ANALYSE</h5>
       <div class="card-body">
           <div class="mb-2">
-            {% if exp_config['exp_id'] and exp_config['output_dir'] and exp_config['docker_status'] and exp_config['samplesheet'] %}
+            {% if exp_config['exp_id'] and exp_config['samplesheet'] %}
             <button type="button" class="btn btn-success text-white" id="run-workflow-btn">Commencer</button>
             {% else %}
             <button type="button" class="btn btn-success text-white" id="run-workflow-btn" disabled>Commencer</button>
@@ -150,22 +167,23 @@
     </div>
 
     <form method="POST" action="/open_results" id="open-results">
-    <div class="card mt-4">
-      <h5 class="card-header">4. RÉSULTATS <img src="{{ url_for('static', filename='img/file-earmark-bar-graph.svg') }}" alt="Icon" class="bi bi-bootstrap-fill" style="transform: scale(1.1);"></h5>
-      <div class="card-body">
-        <button type="submit" class="btn btn-primary mb-2" id="open-results-btn" disabled>Ouvrir</button>
+      <div class="card mt-4">
+        <h5 class="card-header">4. RÉSULTATS <img src="{{ url_for('static', filename='img/file-earmark-bar-graph.svg') }}" alt="Icon" class="bi bi-bootstrap-fill" style="transform: scale(1.1);"></h5>
+        <div class="card-body">
+          <button type="submit" class="btn btn-primary mb-2" id="open-results-btn" disabled>Ouvrir</button>
+        </div>
       </div>
-    </div>
     </form>
   </div>
 
   <script>
   
     $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-bs-toggle="tooltip"]').tooltip()
     })
 
-    var socket = io();
+    const socket = io();
+
     $('#run-workflow-btn').click(function() {
             socket.emit('run_workflow', {});
             $('#run-workflow-btn').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analyse en cours...')
@@ -198,10 +216,6 @@
       terminal.textContent += msg.data;
       terminal.scrollTop = terminal.scrollHeight;
         });
-
-    $('#open-results-btn').click(function() {
-            $('#open-results-btn').prop('disabled', true);
-        });
     
     socket.on('redirect_after_cancel', function(data) {
       window.location.href = data.url;
@@ -214,7 +228,23 @@
         bsToast.show();
       });
     });
-  
+
+    // Remove row
+    $('#samples-table').on('click', '.remove-row', function() {
+        $(this).closest('tr').remove();
+    });
+
+    $('#reinitialize-table-btn').click(function() {
+    window.location.href = '/refresh_sample_sheet';
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl)
+      });
+    });
+
   </script>
 
 </body>

@@ -1,8 +1,5 @@
 process KRAKEN {
 
-    container workflow.containerEngine == 'singularity' ?
-            params.kraken_singularity : params.kraken_docker
-
     publishDir "${params.output}/kraken", mode: 'copy'
 
     input:

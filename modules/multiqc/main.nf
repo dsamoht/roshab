@@ -1,8 +1,5 @@
 process MULTIQC {
 
-    container workflow.containerEngine == 'singularity' ?
-        params.multiqc_singularity : params.multiqc_docker
-
     publishDir "${params.output}/multiqc", mode: 'copy'
 
     input:

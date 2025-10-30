@@ -1,7 +1,4 @@
 process PLOT_GENE_MINIMAP {
-
-    container workflow.containerEngine == 'singularity' ?
-        params.pandas_singularity : params.pandas_docker
     
     publishDir "${params.output}/figures", mode: 'copy'
 

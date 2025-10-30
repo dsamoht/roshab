@@ -7,8 +7,6 @@ include { DISPATCH                  } from '../dispatch'
 include { KRAKEN                    } from '../../modules/kraken'
 include { KRAKENTOOLS_COMBINEMPA    } from '../../modules/krakentools_combinempa'
 include { KRAKENTOOLS_KREPORT2MPA   } from '../../modules/krakentools_kreport2mpa'
-include { KRAKENTOOLS_KRONA         } from '../../modules/krakentools_krona'
-include { KRONA                     } from '../../modules/krona'
 include { MINIMAP as MINIMAP_GENE   } from '../../modules/minimap'
 include { MULTIQC                   } from '../../modules/multiqc'
 include { NANOSTAT                  } from '../../modules/nanostat'
@@ -78,9 +76,6 @@ workflow ROSHAB_WF {
     
     ch_minimap_gene_plot_out = PLOT_GENE_MINIMAP(ch_plot_gene_map_in)
     
-    ch_krakentools_krona = KRAKENTOOLS_KRONA(ch_kraken_out.kraken_report)
-    ch_krona_out = KRONA(ch_krakentools_krona.krakentools_to_krona)
-
     ch_multiqc_files = Channel.empty()
     ch_multiqc_files = ch_multiqc_files.mix(ch_nanostats_out.ifEmpty([]),
                        ch_kraken_out

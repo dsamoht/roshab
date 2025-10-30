@@ -1,9 +1,6 @@
 #!/usr/bin/env nextflow
 
 include { ROSHAB_WF             } from './workflows/roshab_wf'
-include { SETUP_DOCKER_WF       } from './workflows/setup_docker_wf'
-include { SETUP_SINGULARITY_WF  } from './workflows/setup_singularity_wf'
-
 
 info = """
   ____           _   _    _    ____         ____ _     ___ 
@@ -13,7 +10,7 @@ info = """
  |_| \\_\\___/|___/_| |_/_/   \\_\\____/       \\____|_____|___|
                                                                                                                       
 
- Taxonomic classification of ONT reads with Kraken2 and minimap2 with a focus on
+ Classification and quantification of ONT reads with Kraken2 and minimap2 with a focus on
  bloom-forming microorganisms.
 
      Github: https://github.com/dsamoht/roshab
@@ -31,8 +28,6 @@ Arguments:
 
 Optional argument:
     --skip_qc : skip quality control step (`porechop_abi` and `chopper`)
-    --setup : download the container images and exit
-    -profile singularity : use Singularity as the container engine instead of the default (Docker)
     --help : print this help message
 """
 
@@ -41,8 +36,6 @@ log.info info
 if( params.help ) {
     exit 0
 }
-
-if ( !params.setup ) {
 
 if ( !params.input) {
     log.info "Error: input samplesheet not specified."
@@ -60,20 +53,8 @@ if ( !params.output) {
 
 }
 
-}
-
 workflow {
 
-    if (params.setup) {
-        if (workflow.containerEngine == "singularity") {
-        SETUP_SINGULARITY_WF()
-        }
-        if (workflow.containerEngine == "docker") {
-        SETUP_DOCKER_WF()
-        }
-    }
-    else {
-        ROSHAB_WF()
-    }
+    ROSHAB_WF()
 
 }

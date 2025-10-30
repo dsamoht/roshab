@@ -1,8 +1,5 @@
 process SAMTOOLS {
 
-    container workflow.containerEngine == 'singularity' ?
-        params.samtools_singularity : params.samtools_docker
-
     publishDir "${params.output}/samtools", mode: 'copy'
 
     input:
@@ -10,7 +7,6 @@ process SAMTOOLS {
     val fastaName
 
     output:
-    //tuple val(meta), path('*map.sorted.bam'), emit: bamFile
     tuple val(meta), path('*map.sorted.coverage'), emit: covFile
 
     script:

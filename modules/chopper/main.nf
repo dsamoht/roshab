@@ -1,8 +1,5 @@
 process CHOPPER {
 
-    container workflow.containerEngine == 'singularity' ?
-        params.chopper_singularity : params.chopper_docker
-
     input:
     tuple val(meta), path(reads)
 
