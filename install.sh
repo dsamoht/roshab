@@ -1,5 +1,15 @@
 #!/bin/bash
 set -e
+# --- Ensure script is run from the project root (where main.nf and nextflow.config exist) ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ ! -f "$SCRIPT_DIR/main.nf" ] || [ ! -f "$SCRIPT_DIR/nextflow.config" ]; then
+    echo -e "\033[1;31mError:\033[0m Please run this script from inside the cloned Genomic Dashboard directory."
+    echo "Example:"
+    echo "    cd genomic-dashboard"
+    echo "    bash genomic_dashboard.sh"
+    exit 1
+fi
 
 APP_NAME="Genomic Dashboard"
 IMAGE_NAME="genomic_dashboard_v1.0"
@@ -37,7 +47,9 @@ install_app() {
     # --- Copy project to install directory ---
     log "Copying project files to $INSTALL_DIR ..."
     mkdir -p "$INSTALL_DIR"
-    cp -r . "$INSTALL_DIR" 2>/dev/null || rsync -a --exclude '.git' ./ "$INSTALL_DIR"
+    # Copy only from the validated project root
+    cd "$SCRIPT_DIR"
+    rsync -a --exclude '.git' --exclude '.*' "$SCRIPT_DIR/" "$INSTALL_DIR/"
 
     # --- Ensure database directory exists ---
     mkdir -p "$DB_DIR"

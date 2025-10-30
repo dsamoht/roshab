@@ -16,9 +16,14 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ```
 ### Dependency
-[Docker](https://www.docker.com/)
+- Linux or macOS
+- [Docker](https://www.docker.com/)
  
 ### Installation
 ```
-git clone https://github.com/dsamoht/roshab && ./roshab/install.sh
+git clone https://github.com/dsamoht/roshab && cd ./roshab && ./install.sh
+```
+### Run the application
+```
+genomic-dashboard
 ```
