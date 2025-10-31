@@ -1,5 +1,13 @@
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 
+### Introduction
+A dashboard made to launch genomic pipelines from raw sequencing data.
+This project was developed during the RosHAB project.
+
+The dashboard now integrates the RosHAB-CLI pipeline, made to assign taxonomy to reads
+and count cyanotoxin-related genes. This software is primarly made to be used with Nanopore
+reads.
+
 ```
   ____           _   _    _    ____         ____ _     ___ 
  |  _  \___  ___| | | |  / \  | __ )       / ___| |   |_ _|
@@ -18,6 +26,11 @@
 ### Dependency
 - Linux or macOS
 - [Docker](https://www.docker.com/)
+
+> [!IMPORTANT]For advanced users:  
+> RosHAB-CLI is a Nextflow pipeline that can be used as is - without the dashboard wrapper.  
+> Its dependencies are all listed in [environment.yaml](environment.yaml).  
+> See ```nextflow run main.nf --help``` for further informations.
  
 ### Installation
 ```
