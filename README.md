@@ -27,7 +27,7 @@ reads.
 - Linux or macOS
 - [Docker](https://www.docker.com/)
 
-> [!IMPORTANT]For advanced users:  
+> [!NOTE]    
 > RosHAB-CLI is a Nextflow pipeline that can be used as is - without the dashboard wrapper.  
 > Its dependencies are all listed in [environment.yaml](environment.yaml).  
 > See ```nextflow run main.nf --help``` for further informations.
